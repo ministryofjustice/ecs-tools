@@ -1,0 +1,35 @@
+#!/bin/bash
+
+##
+# SSH to an ECS cluster
+# Open an SSH connection to a host instance within an ECS cluster.
+##
+
+USAGE="Open an SSH connection to a host instance within an ECS cluster.
+
+Usage:
+  ssh-to-cluster <name> [...]
+
+Parameters:
+  <name>    Name of the ECS cluster.
+  [...]     Additional parameters will be passed to the SSH command.
+
+Example usage:
+  ssh-to-cluster default -N -L 3306:path.to.mysql.rds.amazonaws.com:3306
+"
+
+if [ -z $1 ]
+then
+	echo "$USAGE"
+	exit 1
+fi
+
+CLUSTER=$1
+export AWS_DEFAULT_OUTPUT="text"
+
+CONTAINER_INSTANCE=$(aws ecs list-container-instances --cluster $CLUSTER | awk 'NR==1 {print $2;}')
+EC2_INSTANCE=$(aws ecs describe-container-instances --cluster $CLUSTER --container-instance $CONTAINER_INSTANCE | awk 'NR==1 {print $4;}')
+EC2_HOSTNAME=$(aws ec2 describe-instances --instance $EC2_INSTANCE | awk 'NR==2 {print $15;}')
+
+echo "Connecting to $EC2_INSTANCE at $EC2_HOSTNAME"
+exec ssh ec2-user@$EC2_HOSTNAME "${@:2}"
