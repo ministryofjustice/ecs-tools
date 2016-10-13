@@ -47,5 +47,5 @@ EC2_HOSTNAME=$(aws ec2 describe-instances --instance $EC2_INSTANCE | awk 'NR==2 
 
 echo "Connecting to $EC2_INSTANCE at $EC2_HOSTNAME"
 exec ssh ec2-user@$EC2_HOSTNAME -t "echo 'Connecting to docker container'
-DOCKER_ID=\$(curl -s localhost:51678/v1/tasks?taskarn=$TASK_ARN | python -c \"import sys, json; print json.load(sys.stdin)['Containers'][0]['DockerId']\")
+DOCKER_ID=\$(curl -s localhost:51678/v1/tasks?taskarn=$TASK_ARN | python -c \"import sys, json; containers = json.load(sys.stdin)['Containers']; print next((x['DockerId'] for x in containers if x['Name'] == '$CONTAINER'), '')\")
 docker exec -ti \$DOCKER_ID $SHELL"
