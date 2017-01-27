@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ##
 # SSH to an ECS cluster
@@ -25,11 +26,12 @@ then
 fi
 
 CLUSTER=$1
+
 export AWS_DEFAULT_OUTPUT="text"
 
-CONTAINER_INSTANCE=$(aws ecs list-container-instances --cluster $CLUSTER | awk 'NR==1 {print $2;}')
-EC2_INSTANCE=$(aws ecs describe-container-instances --cluster $CLUSTER --container-instance $CONTAINER_INSTANCE | awk 'NR==1 {print $4;}')
-EC2_HOSTNAME=$(aws ec2 describe-instances --instance $EC2_INSTANCE | awk 'NR==2 {print $15;}')
+CONTAINER_INSTANCE=$(aws ecs list-container-instances --cluster $CLUSTER --query 'containerInstanceArns[0]')
+EC2_INSTANCE=$(aws ecs describe-container-instances --cluster $CLUSTER --container-instance $CONTAINER_INSTANCE --query 'containerInstances[0].ec2InstanceId')
+EC2_HOSTNAME=$(aws ec2 describe-instances --instance $EC2_INSTANCE --query 'Reservations[0].Instances[0].PublicIpAddress')
 
 echo "Connecting to $EC2_INSTANCE at $EC2_HOSTNAME"
 exec ssh ec2-user@$EC2_HOSTNAME "${@:2}"
