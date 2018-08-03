@@ -32,10 +32,8 @@ SERVICE=$2
 CONTAINER=$3
 SHELL=$4
 
-if [ -z $SHELL ]
-then
-	SHELL="bash"
-fi
+# Default $SHELL to bash if none set
+[ ! -z "$SHELL" ] || SHELL="bash"
 
 export AWS_DEFAULT_OUTPUT="text"
 
